@@ -60,6 +60,7 @@ t_path		*create_path(int order)
 	node = (t_path *)malloc(sizeof(t_path));
 	node->path = ft_itoa(order);
 	node->length = 0;
+	node->next = NULL;
 	return (node);
 }
 
@@ -137,25 +138,94 @@ void	reset_visited(t_graph *g)
 		g->visited[i++] = -1;
 }
 
+int		path_cross(t_path *old_path, t_path *new_path)
+{
+	t_path	*tmp;
+	char	**tab_one;
+	char	**tab_two;
+	int		i;
+	int		j;
+
+	tmp = old_path;
+	tab_two = ft_strsplit(new_path->path, '#');
+	while (tmp)
+	{
+		i = 1;
+		tab_one = ft_strsplit(tmp->path, '#');
+		while (tab_one[i + 1])
+		{
+			j = 1;
+			while (tab_two[j + 1])
+			{
+				if (!ft_strcmp(tab_one[i], tab_two[j]))
+				{
+					tab_free(tab_one);
+					tab_free(tab_two);
+					return (1);
+				}
+				j++;
+			}
+			i++;
+		}
+		tab_free(tab_one);
+		tmp = tmp->next;
+	}
+	tab_free(tab_two);
+	return (0);
+}
+
+void	compare_groups(t_group *gr)
+{
+	if (gr->group_length[1] >= gr->group_length[0])
+		free_path(gr->groups[1]);
+	else
+	{
+		free_path(gr->groups[0]);
+		gr->groups[0] = gr->groups[1];
+		gr->groups[1] = NULL;
+	}
+}
+
 void	print_path(t_graph g, t_group *gr, t_path *path, int eog)
 {
 	char	**tab;
 	int		i;
+	static int switchG = 0;
+	t_path *tmp;
 	
 	i = 0;
-	if (gr->groups[0] == NULL)
+	if (eog == 1)
 	{
-		gr->groups[0] = path;
+		if (gr->groups[0] && gr->groups[1])
+			compare_groups(gr);
+		switchG = 1;
+		return ;
 	}
-	tab = ft_strsplit(path->path, '#');
-	//printf("path == %s\n", path->path);
-	printf("path length == %zu\n", path->length);
-	while (tab[i])
+	tmp = gr->groups[switchG];
+	if (gr->groups[switchG] == NULL)
 	{
-		printf("=> %s ", g.index[ft_atoi(tab[i])]);
-		i++;
+		gr->group_length[switchG] += path->length;
+		gr->groups[switchG] = path;
+		if (switchG == 0)
+			gr->gr_one = gr->groups[switchG];
+		else
+			gr->gr_two = gr->groups[switchG];
 	}
-	tab_free(tab);
+	else if (!path_cross(gr->groups[switchG], path))
+	{
+		gr->group_length[switchG] += path->length;
+		gr->groups[switchG]->next = path;
+		gr->groups[switchG] = gr->groups[switchG]->next;
+	}
+	// tab = ft_strsplit(path->path, '#');
+	// printf("path == %s\n", path->path);
+	// printf("path length == %zu\n", path->length);
+	// while (tab[i])
+	// {
+	// 	printf("=> %s ", g.index[ft_atoi(tab[i])]);
+	// 	i++;
+	// }
+	// tab_free(tab);
 }
 
 int		main()
@@ -188,4 +258,9 @@ int		main()
 			print_path(*g, gr, path, 0);
 		reset_visited(g);
 	}
+	printf("path == %s length == %d\n", gr->gr_one->path, gr->group_length[0]);
+	//printf("path == %s\n", gr->gr_one->next->path);
+	printf("------------------------------\n");
+	printf("path == %s length == %d\n", gr->gr_two->path,  gr->group_length[1]);
+	//printf("path == %s\n", gr->gr_two->next->path);
 }
