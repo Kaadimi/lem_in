@@ -62,7 +62,7 @@ t_node		*create_node(int order)
 	t_node *n;
 	
 	n = (t_node *)malloc(sizeof(t_node));
-	n->status = 1;
+	n->status = 0;
 	n->order = order;
 	n->next = NULL;
 	return (n);

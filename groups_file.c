@@ -11,21 +11,23 @@ t_group		*create_group()
 	gr->gr_one = NULL;
 	gr->gr_two = NULL;
 	gr->group_length = (int *)malloc(sizeof(int) * 2);
-	gr->group_length[0] = 0;
-	gr->group_length[1] = 0;
+	gr->path_number = (int *)malloc(sizeof(int) * 2);
+	gr->group_length[0] = gr->group_length[1] = 0;
+	gr->path_number[0] = gr->path_number[1] = 0;	
 	return (gr);
 }
 
-void		free_path(t_path *path)
+void		free_path(t_path **path)
 {
 	t_path *tmp;
 
-	while (path)
+	while (*path)
 	{
-		tmp = path->next;
-		free(path->path);
-		free(path);
-		path = tmp;
+		tmp = (*path)->next;
+		free((*path)->path);
+		free(*path);
+		*path = tmp;
+		printf("wtfff\n");
 	}
-	path = NULL;
+	*path = NULL;
 }

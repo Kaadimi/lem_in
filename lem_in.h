@@ -76,6 +76,7 @@ typedef struct		s_group
 {
 	t_path			*gr_one;
 	t_path			*gr_two;
+	int				*path_number;
 	int				*group_length;
 	t_path			**groups;
 }					t_group;
@@ -94,6 +95,6 @@ t_node				*create_node(int order);
 char				*rev_room_join(char *s1, const char *s2, char c);
 void				tab_free(char **tabs);
 t_group				*create_group();
-void				free_path(t_path *path);
+void				free_path(t_path **path);
 
 #endif

@@ -21,7 +21,7 @@ int		full_node(t_graph *g, int child, int parent, int cond)
 	while (tmp)
 	{
 		if (tmp->order == child)
-			if (tmp->status == cond ? 0 : 1)
+			if (tmp->status == cond)
 			{
 				tmp->status = -1;
 				return (1);
@@ -46,7 +46,7 @@ void	visited_node(t_graph *g, int child, int parent, int cond)
 				g->changed = 1;
 			}
 			else
-				tmp->status = cond ? 0 : 1;
+				tmp->status = cond;
 			break ;
 		}
 		tmp = tmp->next;
@@ -68,30 +68,19 @@ t_path		*trace_back(t_graph *g, int end, int cond)
 {
 	int		i;
 	int		counter;
-	//t_node	*path;
-	//t_node	*edges;
 	t_path		*node;
 
 	counter = 1;
 	node = create_path(end);
 	i = end;
-	//path = create_node(1);
-	//printf("%s => ", g->index[1]);
 	while (g->visited[i] != -2)
 	{
 		node->path = rev_room_join(node->path, ft_itoa(g->visited[i]), '#');
-		// edges = create_node(g->visited[i]);
-		// edges->n_length = counter;
-		// edges->next = path;
-		// path = edges;
-		//printf("%s => ", g->index[g->visited[i]]);
 		visited_node(g, i, g->visited[i], cond);
 		i = g->visited[i];
 		counter++;
 	}
-	//printf("%s\n", node->path);
 	node->length = counter;
-	printf("\n");
 	return (node);
 }
 
@@ -115,7 +104,7 @@ t_path		*ft_bfs(t_graph *g, int cond)
 		while (n)
 		{
 			//printf("possible visit == %s status == %d\n", g->index[n->order],  n->status);
-			if (g->visited[n->order] == -1 && n->status == cond)
+			if (g->visited[n->order] == -1 && n->status != cond && n->status != -1)
 			{
 				//printf("actuel visit == %s  key == %d  node->key == %d\n", g->index[n->order], n->order, tmp);
 				g->visited[n->order] = tmp;
@@ -174,15 +163,20 @@ int		path_cross(t_path *old_path, t_path *new_path)
 	return (0);
 }
 
-void	compare_groups(t_group *gr)
+int		compare_groups(t_group *gr)
 {
-	if (gr->group_length[1] >= gr->group_length[0])
-		free_path(gr->groups[1]);
+	if ((gr->group_length[1] / gr->path_number[1])  >=
+		(gr->group_length[0] / gr->path_number[0]))
+	{
+		free_path(&gr->gr_two);
+		printf("%p  \n", &gr->groups[1]);
+		return (1);
+	}
 	else
 	{
-		free_path(gr->groups[0]);
-		gr->groups[0] = gr->groups[1];
-		gr->groups[1] = NULL;
+		free_path(&gr->gr_one);
+		printf("%p  \n", &gr->groups[0]);
+		return (0);
 	}
 }
 
@@ -191,41 +185,61 @@ void	print_path(t_graph g, t_group *gr, t_path *path, int eog)
 	char	**tab;
 	int		i;
 	static int switchG = 0;
-	t_path *tmp;
+	//t_path *tmp;
 	
 	i = 0;
 	if (eog == 1)
 	{
 		if (gr->groups[0] && gr->groups[1])
-			compare_groups(gr);
-		switchG = 1;
+			switchG = compare_groups(gr);
+		else
+			switchG = 1;
 		return ;
 	}
-	tmp = gr->groups[switchG];
+	//tmp = gr->groups[switchG];
 	if (gr->groups[switchG] == NULL)
 	{
-		gr->group_length[switchG] += path->length;
+		gr->path_number[switchG] = 1;
+		gr->group_length[switchG] = path->length;
 		gr->groups[switchG] = path;
 		if (switchG == 0)
 			gr->gr_one = gr->groups[switchG];
 		else
 			gr->gr_two = gr->groups[switchG];
 	}
-	else if (!path_cross(gr->groups[switchG], path))
+	else if (!path_cross(switchG == 1 ? gr->gr_two : gr->gr_one, path))
 	{
+		gr->path_number[switchG] += 1;
 		gr->group_length[switchG] += path->length;
 		gr->groups[switchG]->next = path;
 		gr->groups[switchG] = gr->groups[switchG]->next;
 	}
-	// tab = ft_strsplit(path->path, '#');
-	// printf("path == %s\n", path->path);
-	// printf("path length == %zu\n", path->length);
-	// while (tab[i])
-	// {
-	// 	printf("=> %s ", g.index[ft_atoi(tab[i])]);
-	// 	i++;
-	// }
-	// tab_free(tab);
+	tab = ft_strsplit(path->path, '#');
+	//printf("path == %s\n", path->path);
+	printf("path length == %zu\n", path->length);
+	while (tab[i])
+	{
+		printf("=> %s ", g.index[ft_atoi(tab[i])]);
+		i++;
+	}
+	printf("\n");
+	tab_free(tab);
+}
+
+void	print_finish(t_group *gr)
+{
+	while (gr->gr_one)
+	{
+		printf("gr 1 paths ==>  %s\n", gr->gr_one->path);
+		gr->gr_one = gr->gr_one->next;
+	}
+	printf("\n");
+	printf("\n");
+	while (gr->gr_two)
+	{
+		printf("gr 2 paths ==>  %s\n", gr->gr_two->path);
+		gr->gr_two = gr->gr_two->next;
+	}
 }
 
 int		main()
@@ -246,11 +260,16 @@ int		main()
 	{
 		path = ft_bfs(g, g->flow);
 		if (path == NULL && g->changed == 0)
+		{
+			
+			printf("winner %d \n", compare_groups(gr));
+			print_finish(gr);
 			break ;
+		}
 		else if (path == NULL)
 		{
 			g->changed = 0;
-			g->flow = g->flow ? 0 : 1;
+			g->flow++;
 			print_path(*g, gr, path, 1);
 			printf("\n---------------------------------\n");
 		}
@@ -258,9 +277,13 @@ int		main()
 			print_path(*g, gr, path, 0);
 		reset_visited(g);
 	}
-	printf("path == %s length == %d\n", gr->gr_one->path, gr->group_length[0]);
+	if (gr->groups[0])
+		printf("group 1 victory");
+	if (gr->groups[1])
+		printf("group 2 victory"); 
+	//printf("path == %s length == %d\n", gr->gr_one->path, gr->group_length[0]);
 	//printf("path == %s\n", gr->gr_one->next->path);
-	printf("------------------------------\n");
-	printf("path == %s length == %d\n", gr->gr_two->path,  gr->group_length[1]);
+	//printf("------------------------------\n");
+	//printf("path == %s length == %d\n", gr->gr_two->path,  gr->group_length[1]);
 	//printf("path == %s\n", gr->gr_two->next->path);
 }
