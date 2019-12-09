@@ -79,6 +79,7 @@ t_graph		*create_graph(t_scout *start)
 	g->length = start->nodes;
 	g->changed = 0;
 	g->flow = 1;
+	g->ants = start->ants;
 	g->adjLists = malloc((start->nodes + 1) * sizeof(t_node));
 	g->visited = malloc(start->nodes * sizeof(int));
 
@@ -161,7 +162,7 @@ int			position_lines(char *line)
 	return (0);
 }
 
-void		scouting_loop(t_scout	*first)
+int		scouting_loop(t_scout	*first)
 {
 	int ret = 1;
 	char 	*line;
@@ -171,16 +172,17 @@ void		scouting_loop(t_scout	*first)
 	while ((ret = get_next_line(0, &line)))
 	{
 		if (first->file == NULL)
+		{
+			if (!(first->ants = ft_atoi(line)))
+				return (0);
 			first->file = ft_strdup(line);
+		}
 		else
 			first->file = room_join(first->file, line, '\n');
 		if (ft_strstr(line, "##start") || ft_strstr(line, "##end"))
 		{
 			if (!get_start(first))
-			{
-				printf("error\n");
-				return ;
-			}
+				return (0);
 		}
 		else if (position_lines(line))
 		{
@@ -196,6 +198,7 @@ void		scouting_loop(t_scout	*first)
 		}
 		free(line);
 	}
+	return (1);
 }
 
 int		index_of_graph(t_graph g, char *str)
@@ -209,7 +212,6 @@ int		index_of_graph(t_graph g, char *str)
 			return (i);
 		i++;
 	}
-	printf("woa woa woa   %s\n", str);
 	return (-1);
 }
 
@@ -229,7 +231,7 @@ int		get_file_line(t_scout *first, char **line, int *eor)
 	return (1);
 }
 
-void		filling_loop(t_graph *g, t_scout *first)
+int		filling_loop(t_graph *g, t_scout *first)
 {
 	int ret = 1;
 	char 	*line;
@@ -248,7 +250,7 @@ void		filling_loop(t_graph *g, t_scout *first)
 			if (check == -1)
 			{
 				tab_free(tab);
-				return ;
+				return (0);
 			}
 			n = create_node(index_of_graph(*g, tab[1]));
 			n->next = g->adjLists[check]->next;
@@ -258,7 +260,7 @@ void		filling_loop(t_graph *g, t_scout *first)
 			if (check == -1)
 			{
 				tab_free(tab);
-				return ;
+				return (0);
 			}
 			n = create_node(index_of_graph(*g, tab[0]));
 			n->next = g->adjLists[check]->next;
@@ -268,6 +270,7 @@ void		filling_loop(t_graph *g, t_scout *first)
 		free(line);
 		line = NULL;
 	}
+	return (1);
 }
 
 // int main()

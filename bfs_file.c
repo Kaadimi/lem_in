@@ -163,20 +163,20 @@ int		path_cross(t_path *old_path, t_path *new_path)
 	return (0);
 }
 
-int		compare_groups(t_group *gr)
+int		compare_groups(t_group *gr, int ants)
 {
-	if ((gr->group_length[1] / gr->path_number[1])  >=
-		(gr->group_length[0] / gr->path_number[0]))
+	if (((ants + gr->group_length[1]) / gr->path_number[1])  >=
+		((ants + gr->group_length[0]) / gr->path_number[0]))
 	{
 		free_path(&gr->gr_two);
-		printf("%p  \n", &gr->groups[1]);
-		return (1);
+		printf("\nfinish\n");
+		return (0);
 	}
 	else
 	{
 		free_path(&gr->gr_one);
-		printf("%p  \n", &gr->groups[0]);
-		return (0);
+		printf("\nfinish\n");
+		return (1);
 	}
 }
 
@@ -185,18 +185,16 @@ void	print_path(t_graph g, t_group *gr, t_path *path, int eog)
 	char	**tab;
 	int		i;
 	static int switchG = 0;
-	//t_path *tmp;
 	
 	i = 0;
 	if (eog == 1)
 	{
 		if (gr->groups[0] && gr->groups[1])
-			switchG = compare_groups(gr);
+			switchG = compare_groups(gr, g.ants);
 		else
 			switchG = 1;
 		return ;
 	}
-	//tmp = gr->groups[switchG];
 	if (gr->groups[switchG] == NULL)
 	{
 		gr->path_number[switchG] = 1;
@@ -253,17 +251,28 @@ int		main()
 	first = (t_scout *)malloc(sizeof(t_scout));
 	first->nodes = 0;
 	first->names = NULL;
-	scouting_loop(first);
+	if (!(scouting_loop(first)) || !first->start || !first->end)
+	{
+		printf("ERROR\n");
+		return (0);
+	}
 	g = create_graph(first);
-	filling_loop(g, first);
+	if (!(filling_loop(g, first)))
+	{
+		printf("ERROR\n");
+		return (0);
+	}
 	while (1337)
 	{
 		path = ft_bfs(g, g->flow);
 		if (path == NULL && g->changed == 0)
 		{
-			
-			printf("winner %d \n", compare_groups(gr));
-			print_finish(gr);
+			if (!gr->gr_one && !gr->gr_two)
+			{
+				printf("ERROR\n");
+				return (0);
+			}
+			passing_ants(g, gr, compare_groups(gr, g->ants));
 			break ;
 		}
 		else if (path == NULL)
@@ -277,13 +286,4 @@ int		main()
 			print_path(*g, gr, path, 0);
 		reset_visited(g);
 	}
-	if (gr->groups[0])
-		printf("group 1 victory");
-	if (gr->groups[1])
-		printf("group 2 victory"); 
-	//printf("path == %s length == %d\n", gr->gr_one->path, gr->group_length[0]);
-	//printf("path == %s\n", gr->gr_one->next->path);
-	//printf("------------------------------\n");
-	//printf("path == %s length == %d\n", gr->gr_two->path,  gr->group_length[1]);
-	//printf("path == %s\n", gr->gr_two->next->path);
 }

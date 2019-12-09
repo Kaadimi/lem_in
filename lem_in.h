@@ -20,6 +20,7 @@
 
 typedef struct		s_scout
 {
+	int				ants;
 	char			*file;
 	int				nodes;
 	char			*names;
@@ -57,6 +58,7 @@ typedef struct		s_node
 
 typedef struct		s_graph
 {
+	int				ants;
 	int				flow;
 	int				changed;
 	char			**index;
@@ -81,10 +83,23 @@ typedef struct		s_group
 	t_path			**groups;
 }					t_group;
 
+typedef struct		s_ant
+{
+	int				last_move;
+	int				path;
+}					t_ant;
+
+typedef struct		s_bridge
+{
+	int				**paths;
+	int				nb_paths;
+	t_ant			**ants;
+}					t_bridge;
+
 int					get_next_line(const int fd, char **line);
 char				*ft_freejoin(char *s1, char *s2);
-void				scouting_loop(t_scout	*first);
-void				filling_loop(t_graph *g, t_scout *first);
+int					scouting_loop(t_scout	*first);
+int					filling_loop(t_graph *g, t_scout *first);
 t_graph				*create_graph(t_scout *start);
 t_queue				*create_queue();
 void				en_queue(t_queue *q, int key);
@@ -96,5 +111,8 @@ char				*rev_room_join(char *s1, const char *s2, char c);
 void				tab_free(char **tabs);
 t_group				*create_group();
 void				free_path(t_path **path);
+void				reset_visited(t_graph *g);
+void				passing_ants(t_graph *g, t_group *gr, int index);
+void				print_finish(t_group *gr);
 
 #endif

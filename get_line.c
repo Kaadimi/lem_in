@@ -68,6 +68,17 @@ int		get_next_line(const int fd, char **line)
 	return (1);
 }
 
+// int		empty_line(char *str
+// {
+// 	int i;
+
+// 	i = 0;
+// 	while (str[i])
+// 	{
+// 		if (str[i] != ' ' && str[i] != '\t')
+// 		i++;
+// 	}
+// }
 // int main()
 // {
 // 	int ret = 1;
